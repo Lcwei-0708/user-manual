@@ -1,0 +1,353 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/templates:/etc/nginx/templates
+      - ./nginx/custom.d:/etc/nginx/custom.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/whitelist.conf:/etc/nginx/whitelist.conf
+      - ./nginx/logrotate/nginx:/etc/logrotate.d/nginx
+      - ./nginx/docker-entrypoint.sh:/docker-entrypoint.sh
+      - ./frontend/dist:/usr/share/nginx/html
+    environment:
+      - NODE_ENV=production
+      - TZ=${TIMEZONE}
+      - HOSTNAME=${HOSTNAME}
+      # Port settings
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - BACKEND_PORT=${BACKEND_PORT}
+      - PMA_PORT=${PMA_PORT}
+      - GRAFANA_PORT=${GRAFANA_PORT}
+      - INFLUXDB_PORT=${INFLUXDB_PORT}
+      - REDIS_INSIGHT_PORT=${REDIS_INSIGHT_PORT}
+      # SSL settings
+      - SSL_ENABLE=${SSL_ENABLE}
+      - SSL_CERT_FILE=${SSL_CERT_FILE}
+      - SSL_KEY_FILE=${SSL_KEY_FILE}
+      # Redis Insight authentication
+      - REDIS_INSIGHT_USER=${REDIS_INSIGHT_USER}
+      - REDIS_INSIGHT_PASSWORD=${REDIS_INSIGHT_PASSWORD}
+    entrypoint: ["/docker-entrypoint.sh"]
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+      - "${PMA_PORT}:${PMA_PORT}"
+      - "${GRAFANA_PORT}:${GRAFANA_PORT}"
+      - "${INFLUXDB_PORT}:${INFLUXDB_PORT}"
+      - "${REDIS_INSIGHT_PORT}:${REDIS_INSIGHT_PORT}"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend-network
+      - backend-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t || exit 1"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app
+    environment:
+      - NODE_ENV=production
+      - TZ=${TIMEZONE}
+      - SITE_URL=${SITE_URL}
+      # Basic settings
+      - VITE_PROJECT_NAME=${PROJECT_NAME}
+      - VITE_PROJECT_DESCRIPTION=${PROJECT_DESCRIPTION}
+      # SSL settings
+      - VITE_SSL_ENABLE=${SSL_ENABLE}
+      # API settings
+      - VITE_BACKEND_HOST=${HOSTNAME}
+      - VITE_BACKEND_PORT=${BACKEND_PORT}
+      # Keycloak settings
+      - VITE_KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL}
+      - VITE_KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - VITE_KEYCLOAK_CLIENT=${KEYCLOAK_CLIENT}
+      - VITE_KEYCLOAK_SUPER_ROLE=${KEYCLOAK_SUPER_ROLE}
+      # Web push settings
+      - VITE_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+    command: ["sh", "./init-prod.sh"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/dist/index.html || exit 1"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+    environment:
+      - TZ=${TIMEZONE}
+      - SECRET_KEY=${SECRET_KEY}
+      - LOG_LEVEL=${LOG_LEVEL}
+      # Basic settings
+      - PROJECT_NAME=${PROJECT_NAME}
+      - PROJECT_DESCRIPTION=${PROJECT_DESCRIPTION}
+      # CORS settings
+      - HOSTNAME=${HOSTNAME}
+      - BACKEND_PORT=${BACKEND_PORT}
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      # SSL settings
+      - SSL_ENABLE=${SSL_ENABLE}
+      # Database settings
+      - DATABASE_URL=mysql+pymysql://${DB_USER}:${DB_PASSWORD}@mariadb/${DB_DATABASE}
+      - DATABASE_URL_TEST=mysql+pymysql://${DB_USER}:${DB_PASSWORD}@mariadb/test_${DB_DATABASE}
+      - DB_POOL_SIZE=${DB_POOL_SIZE}
+      - DB_POOL_TIMEOUT=${DB_POOL_TIMEOUT}
+      - DB_POOL_RECYCLE=${DB_POOL_RECYCLE}
+      - DB_MAX_OVERFLOW=${DB_MAX_OVERFLOW}
+      - DB_CONNECT_TIMEOUT=${DB_CONNECT_TIMEOUT}
+      - DB_READ_TIMEOUT=${DB_READ_TIMEOUT}
+      - DB_WRITE_TIMEOUT=${DB_WRITE_TIMEOUT}
+      # Redis settings
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      # Keycloak settings
+      - KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - KEYCLOAK_CLIENT=${KEYCLOAK_CLIENT}
+      - KEYCLOAK_ADMIN_CLIENT=${KEYCLOAK_ADMIN_CLIENT}
+      - KEYCLOAK_ADMIN_CLIENT_SECRET=${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      - KEYCLOAK_SUPER_ROLE=${KEYCLOAK_SUPER_ROLE}
+      # Web push settings
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_EMAIL=${VAPID_EMAIL}
+      # InfluxDB settings
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+      - INFLUXDB_TIMEOUT=${INFLUXDB_TIMEOUT}
+    command: ["sh", "./init-prod.sh"]
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: always    
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:5000 || exit 1"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  mariadb:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    environment:
+      - TZ=${TIMEZONE}
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./db/custom.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./db/scripts/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh
+      - ./db/scripts/backup.sh:/backup.sh
+      - ./db/docker-entrypoint.sh:/docker-entrypoint.sh
+      - ./db/backups:/backups
+    entrypoint: ["/docker-entrypoint.sh"]
+    command: ["mariadbd"]
+    networks:
+      - backend-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin --user=$${MYSQL_USER} --password=$${MYSQL_PASSWORD} --host=localhost ping"]
+      start_period: 10s
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  influxdb:
+    image: influxdb:2.7.12
+    environment:
+      - TZ=${TIMEZONE}
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    networks:
+      - backend-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail http://localhost:8086/health || exit 1"]
+      start_period: 10s
+      interval: 5s
+      timeout: 30s
+      retries: 5
+      
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2.2
+    environment:
+      - TZ=${TIMEZONE}
+      - PMA_HOST=mariadb
+      - PMA_USER=root
+      - PMA_PASSWORD=${DB_ROOT_PASSWORD}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: always
+
+  redis:
+    image: redis:8.4.0
+    environment:
+      - TZ=${TIMEZONE}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/docker-entrypoint.sh:/docker-entrypoint.sh
+    user: root
+    entrypoint: ["/docker-entrypoint.sh"]
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-insight:
+    image: redis/redisinsight:2.70
+    environment:
+      - TZ=${TIMEZONE}
+      - RI_REDIS_HOST=redis
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_ALIAS=${PROJECT_NAME}
+      - RI_REDIS_USERNAME=default
+      - RI_REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis-insight-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:5540 || exit 1"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  loki:
+    image: grafana/loki:3.5.3
+    environment:
+      - TZ=${TIMEZONE}
+    volumes:
+      - loki-data:/loki
+      - loki-wal-data:/wal
+      - loki-tsdb-data:/loki/tsdb
+      - loki-tsdb-index-data:/loki/tsdb-index
+      - loki-tsdb-cache-data:/loki/tsdb-cache
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
+    user: root
+    command: ["-config.file=/etc/loki/local-config.yaml", "-config.expand-env=true"]
+    networks:
+      - backend-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  alloy:
+    image: grafana/alloy:v1.10.0
+    environment:
+      - TZ=${TIMEZONE}
+    volumes:
+      - alloy-data:/data
+      - ./backend/logs:/var/log/backend
+      - ./nginx/logs:/var/log/nginx
+      - ./alloy/config.river:/etc/alloy/config.river
+    command: ["run", "--storage.path=/data", "/etc/alloy/config.river"]
+    networks:
+      - backend-network
+    restart: always
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:12.2.0-16557133545
+    environment:
+      - TZ=${TIMEZONE}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=*
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_FEATURE_TOGGLES_LOGSINFINITESCROLLING=true
+      - SSL_ENABLE=${SSL_ENABLE}
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/entrypoint.sh:/entrypoint.sh
+    entrypoint: ["/entrypoint.sh"]
+    user: root
+    depends_on:
+      - loki
+      - influxdb
+    networks:
+      - backend-network
+      - frontend-network
+    restart: always
+
+volumes:
+  db-data:
+  redis-data:
+  redis-insight-data:
+  alloy-data:
+  loki-data:
+  loki-wal-data:
+  loki-tsdb-data:
+  loki-tsdb-index-data:
+  loki-tsdb-cache-data:
+  influxdb-data:
+  influxdb-config:
+  grafana-data:
+
+networks:
+  frontend-network:
+    driver: bridge
+  backend-network:
+    driver: bridge

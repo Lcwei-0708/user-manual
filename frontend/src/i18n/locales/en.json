@@ -1,0 +1,123 @@
+{
+  "App": {
+    "title": "User Manual",
+    "description": "This project is responsible for managing and integrating the user manuals for the system."
+  },
+  "common": {
+    "copy": "Copy",
+    "copied": "Copied {{text}} to clipboard",
+    "copied_failed": "Copy {{text}} failed",
+    "close": "Close",
+    "logout": "Logout",
+    "loading": "Loading...",
+    "backHome": "Back to Home",
+    "retry": "Retry",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "400": {
+      "title": "Bad Request",
+      "message": "Your request is invalid, please check and try again."
+    },
+    "401": {
+      "title": "Unauthorized",
+      "message": "Your session has expired or is invalid, please login again."
+    },
+    "403": {
+      "title": "Forbidden",
+      "message": "You do not have permission to perform this operation."
+    },
+    "404": {
+      "title": "Page Not Found",
+      "message": "The page you are looking for does not exist."
+    },
+    "409": {
+      "title": "Conflict",
+      "message": "The resource already exists, please check and try again."
+    },
+    "422": {
+      "title": "Validation Error",
+      "message": "Data validation failed, please check your input."
+    },
+    "429": {
+      "title": "Too Many Requests",
+      "message": "Too many failed attempts, please try again later."
+    },
+    "500": {
+      "title": "Server Error",
+      "message": "An error occurred on the server, please try again later."
+    },
+    "unknown": {
+      "title": "Unexpected Error",
+      "message": "An unexpected error occurred, please try again later."
+    },
+    "network": {
+      "title": "Connection Error",
+      "message": "Unable to connect to the server, please check your network connection."
+    },
+    "timeout": {
+      "title": "Request Timeout",
+      "message": "The request took too long, please try again later."
+    },
+    "incorrect": {
+      "title": "Incorrect Data",
+      "message": "The provided data is incorrect, please check and try again."
+    }
+  },
+  "logout": {
+    "title": "Confirm Logout",
+    "message": "Are you sure you want to logout?"
+  },
+  "test": {
+    "userInfo": "User Info",
+    "showUserInfo": "Show User Info",
+    "copyToken": "Copy Token",
+    "webPush": "Web Push",
+    "register": "Register Notifications",
+    "cancel": "Cancel Notifications",
+    "subscribed": "Subscribed",
+    "notSubscribed": "Not Subscribed",
+    "admin": "Admin Page"
+  },
+  "user": {
+    "getInfo": {
+      "messages": {
+        "success": "User info retrieved successfully"
+      }
+    },
+    "update": {
+      "messages": {
+        "success": "User info updated successfully",
+        "400": "Failed to update user info",
+        "409": "Email already exists"
+      }
+    },
+    "changePassword": {
+      "messages": {
+        "success": "Password changed successfully",
+        "incorrect": "Current password is incorrect"
+      }
+    }
+  },
+  "webpush": {
+    "subscribe": {
+      "messages": {
+        "success": "Web Push subscription successful"
+      }
+    },
+    "unsubscribe": {
+      "messages": {
+        "success": "Web Push unsubscription successful"
+      }
+    },
+    "getSubscriptions": {
+      "messages": {
+        "success": "Subscriptions retrieved successfully"
+      }
+    }
+  },
+  "websocket": {
+    "connected": "WebSocket connected"
+  }
+}

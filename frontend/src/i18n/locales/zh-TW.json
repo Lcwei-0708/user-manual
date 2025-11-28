@@ -1,0 +1,122 @@
+{
+  "App": {
+    "title": "使用手冊",
+    "description": "這是一個負責管理整合系統中所有使用手冊的專案。"
+  },
+  "common": {
+    "copy": "複製",
+    "copied": "已複製{{text}}到剪貼簿",
+    "copied_failed": "複製{{text}}失敗",
+    "close": "關閉",
+    "logout": "登出",
+    "loading": "載入中...",
+    "backHome": "回首頁",
+    "retry": "重試",
+    "confirm": "確認",
+    "cancel": "取消"
+  },
+  "errors": {
+    "400": {
+      "title": "請求錯誤",
+      "message": "您的請求格式不正確，請檢查後重試。"
+    },
+    "401": {
+      "title": "未授權",
+      "message": "登入已過期或無效，請重新登入。"
+    },
+    "403": {
+      "title": "權限不足",
+      "message": "您沒有權限執行此操作。"
+    },
+    "404": {
+      "title": "找不到頁面",
+      "message": "您要找的頁面不存在。"
+    },
+    "409": {
+      "title": "衝突",
+      "message": "資料已存在，請檢查後重試。"
+    },
+    "422": {
+      "title": "驗證錯誤",
+      "message": "資料驗證失敗，請檢查輸入內容。"
+    },
+    "429": {
+      "title": "請求過於頻繁",
+      "message": "嘗試次數過多，請稍後再試。"
+    },
+    "500": {
+      "title": "伺服器錯誤",
+      "message": "伺服器發生錯誤，請稍後再試。"
+    },
+    "unknown": {
+      "title": "未預期錯誤",
+      "message": "發生未預期的錯誤，請稍後再試。"
+    },
+    "network": {
+      "title": "連線錯誤",
+      "message": "無法連接到伺服器，請檢查您的網路連線。"
+    },
+    "timeout": {
+      "title": "請求逾時",
+      "message": "請求時間過長，請稍後再試。"
+    },
+    "incorrect": {
+      "title": "資料不正確",
+      "message": "提供的資料不正確，請檢查後重試。"
+    }
+  },
+  "logout": {
+    "title": "確認登出",
+    "message": "您確定要登出嗎？"
+  },
+  "test": {
+    "userInfo": "使用者資訊",
+    "showUserInfo": "顯示使用者資訊",
+    "copyToken": "複製 Token",
+    "webPush": "Web Push 通知",
+    "register": "註冊通知",
+    "cancel": "取消通知",
+    "subscribed": "已訂閱",
+    "notSubscribed": "尚未訂閱"
+  },
+  "user": {
+    "getInfo": {
+      "messages": {
+        "success": "成功取得使用者資訊"
+      }
+    },
+    "update": {
+      "messages": {
+        "success": "使用者資訊更新成功",
+        "400": "更新使用者資訊失敗",
+        "409": "此信箱已被註冊"
+      }
+    },
+    "changePassword": {
+      "messages": {
+        "success": "密碼變更成功",
+        "incorrect": "舊密碼不正確"
+      }
+    }
+  },
+  "webpush": {
+    "subscribe": {
+      "messages": {
+        "success": "Web Push 訂閱成功"
+      }
+    },
+    "unsubscribe": {
+      "messages": {
+        "success": "Web Push 取消訂閱成功"
+      }
+    },
+    "getSubscriptions": {
+      "messages": {
+        "success": "成功取得訂閱清單"
+      }
+    }
+  },
+  "websocket": {
+    "connected": "WebSocket 連線成功"
+  }
+}
