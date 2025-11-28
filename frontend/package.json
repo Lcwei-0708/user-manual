@@ -20,7 +20,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.5",
     "i18next": "^25.2.1",
-    "keycloak-js": "^26.2.0",
+    "keycloak-js": "^25.0.6",
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
